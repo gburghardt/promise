@@ -1,0 +1,10 @@
+{
+	"name": "promise",
+	"description": "Roll your own custom promises with this dead simple base class allowing you to easily tame the Promise Programming Pattern.",
+	"version": "1.0.0",
+	"author": "Greg Burghardt <greg_burghardt@yahoo.com>",
+	"homepage": "https://github.com/gburghardt/promise",
+	"repository": {"type": "git", "url": "https://github.com/gburghardt/promise.git"},
+	"main": "lib/promise.js",
+	"keywords": ["javascript", "promise", "promise pattern", "asynchronous programming"]
+}
