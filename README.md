@@ -16,18 +16,18 @@ asynchronous operation is invoked.
 ## A quick and dirty example
 
     blogPost.save(this)
-    .saved(function(response, xhr) {
-      console.log("Saved!");
-    })
-    .invalid(function(xhr) {
-      console.warn("Oops, validation errors. Try again.");
-    })
-    .failure(function(xhr) {
-      console.error("Blam-O! Nothing you can do. The wheel is spinning, but the hamster is dead.");
-    })
-    .complete(function() {
-      console.log("Done!");
-    });
+        .saved(function(response, xhr) {
+            console.log("Saved!");
+        })
+        .invalid(function(xhr) {
+            console.warn("Oops, validation errors. Try again.");
+        })
+        .failure(function(xhr) {
+            console.error("Blam-O! Nothing you can do. The wheel is spinning, but the hamster is dead.");
+        })
+        .complete(function() {
+            console.log("Done!");
+        });
 
 Just by looking at this, you can see what codes gets executed and why
 it's being invoked. The "saved" callback means you've saved the blog
@@ -41,14 +41,14 @@ callbacks are invoked.
 Compare that to:
 
     blogPost.save()
-    .then(
-      function() {
-        // ...
-      },
-      function() {
-        // ...
-      }
-    );
+      .then(
+          function() {
+              // ...
+          },
+          function() {
+              // ...
+          }
+      );
 
 Only if you know the Promise/A+ implementation of the Promise Pattern
 would you know that the first function is the "success" handler, and
@@ -76,8 +76,8 @@ done with this operation, so perform some cleanup work.
 The promise sub class:
 
     var ResponsePromise = function(promiser, context) {
-      Promise.call(this, promiser, context);
-      this._createCallbacks("success", "invalid", "failure", "complete");
+        Promise.call(this, promiser, context);
+        this._createCallbacks("success", "invalid", "failure", "complete");
     };
     ResponsePromise.prototype = new Promise();
 
@@ -85,70 +85,73 @@ Use the promise:
 
     BlogPost = function() {};
     BlogPost.prototype.save = function(context) {
-      var promise = new ResponsePromise(this, context);
+        var promise = new ResponsePromise(this, context);
 
-      var xhr = new XMLHttpRequest();
-      // ...
-      xhr.onreadystatechange = function() {
-        if (this.readyState !== 4) { return; }
+        var xhr = new XMLHttpRequest();
+        // ...
+        xhr.onreadystatechange = function() {
+            if (this.readyState !== 4) { return; }
 
-        if (this.status === 200 || this.status === 201) {
-          promise.fullfill("success", this)
-            .fullfill("complete", this);
-        }
-        else if (this.status === 422) {
-          promise.fullfill("invalid", JSON.parse(this.responseText))
-            .fullfill("complete", this);
-        }
-        else if (this.status >= 400) {
-          promise.fullfill("failure", this)
-            .fullfill("complete", this);
-        }
-      };
+            if (this.status === 200 || this.status === 201) {
+                promise
+                    .fullfill("success", this)
+                    .fullfill("complete", this);
+            }
+            else if (this.status === 422) {
+                promise
+                    .fullfill("invalid", JSON.parse(this.responseText))
+                    .fullfill("complete", this);
+            }
+            else if (this.status >= 400) {
+                promise
+                    .fullfill("failure", this)
+                    .fullfill("complete", this);
+            }
+        };
 
-      xhr.send();
+        xhr.send();
 
-      return promise;
+        return promise;
     };
 
 Invoke the promise:
 
     var BlogPostController = {
-      formSubmit: function() {
-        var blogPost = new BlogPost();
-        blogPost.title = "Testing";
+        formSubmit: function() {
+            var blogPost = new BlogPost();
+            blogPost.title = "Testing";
 
-        // save the blog post, which returns a ResponsePromise...
-        blogPost.save(this)
-        .saved(function(xhr, promiser) {
-          this.setInfoMessage("Saved blog post with title " + promiser.title);
-          this.hide();
-        })
-        .invalid(function(errors, promiser) {
-          this.setFormErrors("Some input errors occurred saving blog post with title " + promiser.title + ". Please fix them an try again", errors);
-          this.focus();
-        })
-        .failure(function(xhr, promiser) {
-          this.setFormErrors("An error occurred saving blog post with title " + promiser.title + ". Please call our help desk.");
-          this.focus();
-        })
-        .complete(function() {
-          // clean up work
-          blogPost = null;
-        });
-      },
-      focus: function() {
-        // ...
-      },
-      hide: function() {
-        this.element.style.display = "none";
-      },
-      setInfoMessage: function(s) {
-        // ...
-      },
-      setFormErrors: function(message, errors) {
-        // ...
-      }
+            // save the blog post, which returns a ResponsePromise...
+            blogPost.save(this)
+                .saved(function(xhr, promiser) {
+                    this.setInfoMessage("Saved blog post with title " + promiser.title);
+                    this.hide();
+                })
+                .invalid(function(errors, promiser) {
+                    this.setFormErrors("Some input errors occurred saving blog post with title " + promiser.title + ". Please fix them an try again", errors);
+                    this.focus();
+                })
+                .failure(function(xhr, promiser) {
+                    this.setFormErrors("An error occurred saving blog post with title " + promiser.title + ". Please call our help desk.");
+                    this.focus();
+                })
+                .complete(function() {
+                    // clean up work
+                    blogPost = null;
+                });
+        },
+        focus: function() {
+            // ...
+        },
+        hide: function() {
+            this.element.style.display = "none";
+        },
+        setInfoMessage: function(s) {
+            // ...
+        },
+        setFormErrors: function(message, errors) {
+            // ...
+        }
     };
 
 Error handling is not an exact science, but this incarnation of the Promise Pattern can help you tame it.
