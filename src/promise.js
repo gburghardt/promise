@@ -97,9 +97,9 @@
 			return this;
 		},
 
-		fullfill: function fullfill() {
+		fulfill: function fulfill() {
 			if (arguments.length === 0) {
-				throw new Error("The first argument to Promise#fullfill must be the name of the promise to fullfill");
+				throw new Error("The first argument to Promise#fulfill must be the name of the promise to fulfill");
 			}
 
 			var name = arguments[0],

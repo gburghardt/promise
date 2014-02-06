@@ -111,18 +111,18 @@ Use the promise:
 
             if (this.status === 200 || this.status === 201) {
                 promise
-                    .fullfill("saved", this)
-                    .fullfill("complete", this);
+                    .fulfill("saved", this)
+                    .fulfill("complete", this);
             }
             else if (this.status === 422) {
                 promise
-                    .fullfill("invalid", JSON.parse(this.responseText), this)
-                    .fullfill("complete", this);
+                    .fulfill("invalid", JSON.parse(this.responseText), this)
+                    .fulfill("complete", this);
             }
             else if (this.status >= 400) {
                 promise
-                    .fullfill("failure", this)
-                    .fullfill("complete", this);
+                    .fulfill("failure", this)
+                    .fulfill("complete", this);
             }
         };
 

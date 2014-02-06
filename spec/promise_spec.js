@@ -36,12 +36,12 @@ describe("Promise", function() {
 
 		it("returns false for methods that exist on the Promise class, but not defined as a callback", function() {
 			expect(instance.callbackDefined("destructor")).toBe(false);
-			expect(instance.callbackDefined("fullfill")).toBe(false);
+			expect(instance.callbackDefined("fulfill")).toBe(false);
 		});
 
 	});
 
-	describe("fullfill", function() {
+	describe("fulfill", function() {
 
 		var TestPromise = Promise.create(["success", "error", "complete"]);
 
@@ -49,11 +49,11 @@ describe("Promise", function() {
 			var promise = new TestPromise();
 
 			expect(function() {
-				promise.fullfill();
-			}).toThrow(new Error("The first argument to Promise#fullfill must be the name of the promise to fullfill"));
+				promise.fulfill();
+			}).toThrow(new Error("The first argument to Promise#fulfill must be the name of the promise to fulfill"));
 		});
 
-		it("fullfills a promise by the given name if one exists", function() {
+		it("fulfills a promise by the given name if one exists", function() {
 			var o = {
 				test: function() {}
 			};
@@ -61,7 +61,7 @@ describe("Promise", function() {
 
 			var promise = new TestPromise();
 			promise.success(o.test);
-			promise.fullfill("success");
+			promise.fulfill("success");
 
 			expect(o.test).toHaveBeenCalled();
 		});
@@ -78,7 +78,7 @@ describe("Promise", function() {
 
 			var promise = new TestPromise(x);
 			promise.success(o.test);
-			promise.fullfill("success");
+			promise.fulfill("success");
 
 			expect(o.test).toHaveBeenCalled();
 		});
@@ -95,7 +95,7 @@ describe("Promise", function() {
 
 			var promise = new TestPromise(x);
 			promise.success(context.test, context);
-			promise.fullfill("success");
+			promise.fulfill("success");
 		});
 
 		it("passes arbitrary arguments on to the callbacks", function() {
@@ -116,12 +116,12 @@ describe("Promise", function() {
 			var promise = new TestPromise(x);
 			promise.success(context.test, context);
 
-			promise.fullfill("success", a, b, c);
+			promise.fulfill("success", a, b, c);
 		});
 
 		describe("before callbacks have been added", function() {
 
-			it("caches the fullfilled promise until a callback has been added by that name", function() {
+			it("caches the fulfilled promise until a callback has been added by that name", function() {
 				var promiser = {};
 
 				var context = {
@@ -131,7 +131,7 @@ describe("Promise", function() {
 
 				var promise = new TestPromise(promiser);
 
-				promise.fullfill("success");
+				promise.fulfill("success");
 
 				expect(promise._pendingCallbacks.success instanceof Object).toBe(true);
 				expect(promise._pendingCallbacks.success.args instanceof Array).toBe(true);
@@ -230,8 +230,8 @@ describe("Promise", function() {
 			.complete(ctx.complete);
 
 		promise
-			.fullfill("success")
-			.fullfill("complete");
+			.fulfill("success")
+			.fulfill("complete");
 
 		expect(ctx.success).toHaveBeenCalled();
 		expect(ctx.fail).not.toHaveBeenCalled();
