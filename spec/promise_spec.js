@@ -5,141 +5,52 @@ describe("Promise", function() {
 		it("does not require arguments", function() {
 			var promise = new Promise();
 
-			expect(promise._promiser).toBeNull();
-			expect(promise._context).toBeNull();
+			expect(promise.promiser).toBe(null);
 		});
 
 		it("takes a \"promiser\" object, which is the object making the promise", function() {
 			var x = {};
 			var promise = new Promise(x);
 
-			expect(promise._promiser).toStrictlyEqual(x);
-		});
-
-		it("takes a \"promiser\" object and a context for the callbacks", function() {
-			var x = {};
-			var context = {};
-			var promise = new Promise(x, context);
-
-			expect(promise._promiser).toStrictlyEqual(x);
-			expect(promise._context).toStrictlyEqual(context);
-		});
-
-	});
-
-	describe("_createCallback", function() {
-
-		it("creates a method on the prototype by the name passed in", function() {
-			var TestPromise = function(promiser, context) {
-				Promise.call(this, promiser, context);
-				this._createCallback("success");
-			};
-			TestPromise.prototype = new Promise();
-
-			expect(TestPromise.prototype.hasOwnProperty("success")).toBeFalse();
-			expect(TestPromise.prototype.success).toBeUndefined();
-
-			var x = {};
-			var context = {};
-			var instance = new TestPromise(x, context);
-
-			expect(instance.success).toBeFunction();
-			expect(TestPromise.prototype.success).toBeFunction();
-			expect(Promise.prototype.success).toBeUndefined();
-		});
-
-		it("does not overwrite methods by that name if it already exists in the prototype", function() {
-			var TestPromise = function(promiser, context) {
-				Promise.call(this, promiser, context);
-				this._createCallback("success");
-			};
-			TestPromise.prototype = new Promise();
-			TestPromise.prototype.success = function() {};
-
-			var origSuccessMethod = TestPromise.prototype.success;
-			var instance = new TestPromise();
-
-			expect(instance.success).toStrictlyEqual(origSuccessMethod);
-			expect(TestPromise.prototype.success).toStrictlyEqual(origSuccessMethod);
-		});
-
-	});
-
-	describe("_createCallbacks", function() {
-
-		it("accepts a single array argument of callback names", function() {
-			var TestPromise = function(promiser, context) {
-				Promise.call(this, promiser, context);
-				this._createCallbacks(["success", "complete"]);
-			};
-			TestPromise.prototype = new Promise();
-
-			var instance = new TestPromise();
-
-			expect(instance.success).toBeFunction();
-			expect(instance.complete).toBeFunction();
-			expect(TestPromise.prototype.success).toBeFunction();
-			expect(TestPromise.prototype.complete).toBeFunction();
-		});
-
-		it("accepts an arbitrary number of callback names", function() {
-			var TestPromise = function(promiser, context) {
-				Promise.call(this, promiser, context);
-				this._createCallbacks("success", "complete");
-			};
-			TestPromise.prototype = new Promise();
-
-			var instance = new TestPromise();
-
-			expect(instance.success).toBeFunction();
-			expect(instance.complete).toBeFunction();
-			expect(TestPromise.prototype.success).toBeFunction();
-			expect(TestPromise.prototype.complete).toBeFunction();
+			expect(promise.promiser).toBe(x);
 		});
 
 	});
 
 	describe("callbackDefined", function() {
 
-		var TestPromise = function(promiser, context) {
-			Promise.call(this, promiser, context);
-			this._createCallbacks("success", "error", "complete");
-		};
-		TestPromise.prototype = new Promise();
+		var TestPromise = Promise.create(["success", "error", "complete"]),
+		    instance;
 
 		beforeEach(function() {
-			this.instance = new TestPromise();
-		})
+			instance = new TestPromise();
+		});
 
 		it("returns true if a sub class has defined a callback", function() {
-			expect(this.instance.callbackDefined("success")).toBeTrue();
+			expect(instance.callbackDefined("success")).toBe(true);
 		});
 
 		it("returns false if a sub class has not defined that callback", function() {
-			expect(this.instance.callbackDefined("I_do_not_exist")).toBeFalse();
+			expect(instance.callbackDefined("I_do_not_exist")).toBe(false);
 		});
 
 		it("returns false for methods that exist on the Promise class, but not defined as a callback", function() {
-			expect(this.instance.callbackDefined("destructor")).toBeFalse();
-			expect(this.instance.callbackDefined("fullfill")).toBeFalse();
+			expect(instance.callbackDefined("destructor")).toBe(false);
+			expect(instance.callbackDefined("fullfill")).toBe(false);
 		});
 
 	});
 
 	describe("fullfill", function() {
 
-		var TestPromise = function(promiser, context) {
-			Promise.call(this, promiser, context);
-			this._createCallbacks("success", "error", "complete");
-		};
-		TestPromise.prototype = new Promise();
+		var TestPromise = Promise.create(["success", "error", "complete"]);
 
 		it("throws an error if no arguments are given", function() {
 			var promise = new TestPromise();
 
 			expect(function() {
 				promise.fullfill();
-			}).toThrowError();
+			}).toThrow(new Error("The first argument to Promise#fullfill must be the name of the promise to fullfill"));
 		});
 
 		it("fullfills a promise by the given name if one exists", function() {
@@ -152,7 +63,7 @@ describe("Promise", function() {
 			promise.success(o.test);
 			promise.fullfill("success");
 
-			expect(o.test).wasCalled();
+			expect(o.test).toHaveBeenCalled();
 		});
 
 		it("passes the promiser to all the callbacks as the last argument", function() {
@@ -160,16 +71,16 @@ describe("Promise", function() {
 
 			var o = {
 				test: function(promiser) {
-					expect(promiser).toStrictlyEqual(x);
+					expect(promiser).toBe(x);
 				}
 			};
-			spyOn(o, "test").andCallThrough();
+			spyOn(o, "test").and.callThrough();
 
 			var promise = new TestPromise(x);
 			promise.success(o.test);
 			promise.fullfill("success");
 
-			expect(o.test).wasCalled();
+			expect(o.test).toHaveBeenCalled();
 		});
 
 		it("invokes callbacks with the given context", function() {
@@ -177,13 +88,13 @@ describe("Promise", function() {
 
 			var context = {
 				test: function(promiser) {
-					expect(this).toStrictlyEqual(context);
+					expect(this).toBe(context);
 				}
 			};
-			spyOn(context, "test").andCallThrough();
+			spyOn(context, "test").and.callThrough();
 
-			var promise = new TestPromise(x, context);
-			promise.success(context.test);
+			var promise = new TestPromise(x);
+			promise.success(context.test, context);
 			promise.fullfill("success");
 		});
 
@@ -193,17 +104,17 @@ describe("Promise", function() {
 
 			var context = {
 				test: function(arg1, arg2, arg3, promiser) {
-					expect(this).toStrictlyEqual(context);
-					expect(arg1).toStrictlyEqual(a);
+					expect(this).toBe(context);
+					expect(arg1).toBe(a);
 					expect(arg2).toEqual(b);
 					expect(arg3).toEqual(c);
-					expect(promiser).toStrictlyEqual(x);
+					expect(promiser).toBe(x);
 				}
 			};
-			spyOn(context, "test").andCallThrough();
+			spyOn(context, "test").and.callThrough();
 
-			var promise = new TestPromise(x, context);
-			promise.success(context.test);
+			var promise = new TestPromise(x);
+			promise.success(context.test, context);
 
 			promise.fullfill("success", a, b, c);
 		});
@@ -218,82 +129,113 @@ describe("Promise", function() {
 				};
 				spyOn(context, "test");
 
-				var promise = new TestPromise(promiser, context);
-
-				expect(promise._pendingCallbacks.success).toBeInstanceof(Object);
-				expect(promise._pendingCallbacks.success.args).toBeInstanceof(Array);
-				expect(promise._pendingCallbacks.success.args.length).toEqual(1);
-				expect(promise._pendingCallbacks.success.args[0]).toStrictlyEqual(promiser);
-				expect(promise._pendingCallbacks.success.context).toStrictlyEqual(context);
+				var promise = new TestPromise(promiser);
 
 				promise.fullfill("success");
 
-				expect(context.test).wasCalledWith(promiser);
+				expect(promise._pendingCallbacks.success instanceof Object).toBe(true);
+				expect(promise._pendingCallbacks.success.args instanceof Array).toBe(true);
+				expect(promise._pendingCallbacks.success.args.length).toEqual(2);
+				expect(promise._pendingCallbacks.success.args[0]).toBe(promiser);
+				expect(promise._pendingCallbacks.success.args[1]).toBe(promise);
+
+				promise.success(context.test);
+
+				expect(context.test).toHaveBeenCalledWith(promiser, promise);
 			});
 
 		});
 
 	});
 
-	describe("inheritance", function() {
+	describe("create", function() {
 
-		it("must be sub classes to be useful", function() {
-			var ChildPromise = function(promiser, context) {
-				Promise.call(this, promiser, context);
-				this._createCallbacks("a", "b");
-			};
-			ChildPromise.prototype = new Promise();
-
-			var promiser = {};
-			var context = {};
-			var instance = new ChildPromise(promiser, context);
-
-			expect(instance).toBeInstanceof(Promise);
-			expect(instance).toBeInstanceof(ChildPromise);
-			expect(ChildPromise.prototype.a).toBeFunction();
-			expect(ChildPromise.prototype.b).toBeFunction();
-			expect(instance.a).toBeFunction();
-			expect(instance.b).toBeFunction();
+		it("throws an error if no arguments are passed", function() {
+			expect(function() {
+				Promise.create();
+			}).toThrow(new Error("Missing required argument: callbackNames (Array<String>)"));
 		});
 
-		it("can have sub classes of sub classes", function() {
-			var ChildPromise = function(promiser, context) {
-				Promise.call(this, promiser, context);
-				this._createCallbacks("a", "b");
-			};
-			ChildPromise.prototype = new Promise();
+		it("sub classes Promise with just callback names", function() {
+			var ChildPromise = Promise.create(["success", "error"]);
+			var x = new ChildPromise({});
 
-			var GrandChildPromise = function(promiser, context) {
-				ChildPromise.call(this, promiser, context);
-				this._createCallbacks("c");
-			};
-			GrandChildPromise.prototype = new ChildPromise();
+			expect(x instanceof ChildPromise).toBe(true);
+			expect(x instanceof Promise).toBe(true);
+			expect(typeof x.success).toBe("function");
+			expect(typeof x.error).toBe("function");
+			expect(typeof ChildPromise.create).toBe("function");
+			expect(typeof ChildPromise.prototype.success).toBe("function");
+			expect(typeof ChildPromise.prototype.error).toBe("function");
+			expect(typeof Promise.prototype.success).toBe("undefined");
+			expect(typeof Promise.prototype.error).toBe("undefined");
+		});
 
-			var promiser = {};
-			var context = {};
-			var instance = new GrandChildPromise(promiser, context);
+		it("sub classes a Promise sub class", function() {
+			var ChildPromise = Promise.create(["a"]);
+			var GrandChildPromise = ChildPromise.create(["b"]);
+			var x;
 
-			expect(instance).toBeInstanceof(Promise);
-			expect(instance).toBeInstanceof(ChildPromise);
-			expect(instance).toBeInstanceof(GrandChildPromise);
+			expect(typeof ChildPromise.prototype.a).toBe("function");
+			expect(typeof ChildPromise.prototype.b).toBe("undefined");
+			expect(typeof Promise.prototype.b).toBe("undefined");
 
-			expect(ChildPromise.prototype.a).toBeUndefined();
-			expect(ChildPromise.prototype.b).toBeUndefined();
-			expect(ChildPromise.prototype.c).toBeUndefined();
+			expect(typeof GrandChildPromise.prototype.a).toBe("function");
+			expect(typeof GrandChildPromise.prototype.b).toBe("function");
+			expect(typeof ChildPromise.prototype.b).toBe("undefined");
+			expect(typeof Promise.prototype.b).toBe("undefined");
 
-			expect(GrandChildPromise.prototype.a).toBeFunction();
-			expect(GrandChildPromise.prototype.b).toBeFunction();
-			expect(GrandChildPromise.prototype.c).toBeFunction();
+			x = new GrandChildPromise({});
 
-			expect(instance.a).toBeFunction();
-			expect(instance.b).toBeFunction();
-			expect(instance.c).toBeFunction();
+			expect(typeof ChildPromise.prototype.a).toBe("function");
+			expect(typeof ChildPromise.prototype.b).toBe("undefined");
+			expect(typeof Promise.prototype.b).toBe("undefined");
+
+			expect(typeof GrandChildPromise.prototype.a).toBe("function");
+			expect(typeof GrandChildPromise.prototype.b).toBe("function");
+			expect(typeof ChildPromise.prototype.b).toBe("undefined");
+			expect(typeof Promise.prototype.b).toBe("undefined");
+
+			expect(x instanceof GrandChildPromise).toBe(true);
+			expect(x instanceof ChildPromise).toBe(true);
+			expect(x instanceof Promise).toBe(true);
 		});
 
 	});
 
-	describe("errors in callbacks", function() {
-		xit("should be tested");
+	it("allows you to chain calls to a promise", function() {
+		var ctx = {
+			success: function() {
+				expect(this).toBe(ctx);
+			},
+			fail: function() {
+				expect(this).toBe(ctx);
+			},
+			complete: function() {
+				expect(this).toBe(ctx);
+			}
+		};
+
+		var TestPromise = Promise.create(["success", "fail", "complete"]);
+		var promise = new TestPromise();
+
+		spyOn(ctx, "success");
+		spyOn(ctx, "fail");
+		spyOn(ctx, "complete");
+
+		promise
+			.context(ctx)
+			.success(ctx.success)
+			.fail(ctx.fail)
+			.complete(ctx.complete);
+
+		promise
+			.fullfill("success")
+			.fullfill("complete");
+
+		expect(ctx.success).toHaveBeenCalled();
+		expect(ctx.fail).not.toHaveBeenCalled();
+		expect(ctx.complete).toHaveBeenCalled();
 	});
 
 });
